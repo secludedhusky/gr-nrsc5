@@ -20,38 +20,42 @@ constexpr float qam16_power = 3.979400;
 constexpr float qpsk_power = -3.010300;
 constexpr float bpsk_power = -6.020600;
 
-std::vector<int> get_in_sizeofs(const int sm)
+std::vector<int> get_in_sizeofs_am(const int sm, const int rdb)
 {
     std::vector<int> in_sizeofs;
 
     switch (sm) {
     case 1:
-        in_sizeofs.push_back(3750);
-        in_sizeofs.push_back(24000);
         in_sizeofs.push_back(SIS_BITS);
+        in_sizeofs.push_back(3750);
+        if (!rdb)
+            in_sizeofs.push_back(24000);
         break;
     case 3:
-        in_sizeofs.push_back(3750);
-        in_sizeofs.push_back(30000);
         in_sizeofs.push_back(SIS_BITS);
+        in_sizeofs.push_back(3750);
+        if (!rdb)
+            in_sizeofs.push_back(30000);
         break;
     }
 
     return in_sizeofs;
 }
 
-l1_am_encoder::sptr l1_am_encoder::make(const int sm)
+l1_am_encoder::sptr l1_am_encoder::make(
+    const int sm, const int rdb, const int hpp, const int pl, const int aab)
 {
-    return gnuradio::get_initial_sptr(new l1_am_encoder_impl(sm));
+    return gnuradio::get_initial_sptr(new l1_am_encoder_impl(sm, rdb, hpp, pl, aab));
 }
 
 
 /*
  * The private constructor
  */
-l1_am_encoder_impl::l1_am_encoder_impl(const int sm)
+l1_am_encoder_impl::l1_am_encoder_impl(
+    const int sm, const int rdb, const int hpp, const int pl, const int aab)
     : gr::block("l1_am_encoder",
-                gr::io_signature::makev(3, 3, get_in_sizeofs(sm)),
+                gr::io_signature::makev(2, 3, get_in_sizeofs_am(sm, rdb)),
                 gr::io_signature::make(1, 1, sizeof(gr_complex) * AM_FFT_SIZE))
 {
     set_output_multiple(AM_SYMBOLS_PER_FRAME);
@@ -60,6 +64,10 @@ l1_am_encoder_impl::l1_am_encoder_impl(const int sm)
     message_port_register_out(pmt::intern("clock"));
 
     this->sm = sm;
+    this->rdb = rdb;
+    this->hpp = hpp;
+    this->pl = pl;
+    this->aab = aab;
 
     p1_bits = 3750;
     p1_mod = 8;
@@ -84,8 +92,13 @@ l1_am_encoder_impl::l1_am_encoder_impl(const int sm)
     }
 
     for (int bc = 0; bc < AM_BLOCKS_PER_FRAME; bc++) {
-        sc_data_seq(
-            sc_symbols + (bc * SYMBOLS_PER_BLOCK), 0, 0, 0, 0, bc, sm == 1 ? 1 : 2);
+        sc_data_seq(sc_symbols + (bc * SYMBOLS_PER_BLOCK),
+                    pl,
+                    hpp,
+                    aab,
+                    rdb,
+                    bc,
+                    sm == 1 ? 1 : 2);
     }
 
     set_channel_power();
@@ -104,9 +117,10 @@ void l1_am_encoder_impl::forecast(int noutput_items, gr_vector_int& ninput_items
 {
     int frames = noutput_items / AM_SYMBOLS_PER_FRAME;
 
-    ninput_items_required[0] = frames * p1_mod;
-    ninput_items_required[1] = frames * p3_mod;
-    ninput_items_required[2] = frames * AM_BLOCKS_PER_FRAME;
+    ninput_items_required[0] = frames * AM_BLOCKS_PER_FRAME;
+    ninput_items_required[1] = frames * p1_mod;
+    if (!rdb)
+        ninput_items_required[2] = frames * p3_mod;
 }
 
 int l1_am_encoder_impl::general_work(int noutput_items,
@@ -114,9 +128,12 @@ int l1_am_encoder_impl::general_work(int noutput_items,
                                      gr_vector_const_void_star& input_items,
                                      gr_vector_void_star& output_items)
 {
-    const unsigned char* p1 = (const unsigned char*)input_items[0];
-    const unsigned char* p3 = (const unsigned char*)input_items[1];
-    const unsigned char* pids = (const unsigned char*)input_items[2];
+    const unsigned char *p1 = NULL, *p3 = NULL, *pids = NULL;
+
+    pids = (const unsigned char*)input_items[0];
+    p1 = (const unsigned char*)input_items[1];
+    if (!rdb)
+        p3 = (const unsigned char*)input_items[2];
     gr_complex* out = (gr_complex*)output_items[0];
 
     int frames = noutput_items / AM_SYMBOLS_PER_FRAME;
@@ -134,15 +151,18 @@ int l1_am_encoder_impl::general_work(int noutput_items,
         }
         switch (sm) {
         case 1:
-            encode_l2_pdu(conv_mode::CONV_E2, p3 + p3_off, p3_g, p3_bits);
+            if (!rdb)
+                encode_l2_pdu(conv_mode::CONV_E2, p3 + p3_off, p3_g, p3_bits);
             interleaver_ma1();
             break;
         case 3:
-            encode_l2_pdu(conv_mode::CONV_E1, p3 + p3_off, p3_g, p3_bits);
+            if (!rdb)
+                encode_l2_pdu(conv_mode::CONV_E1, p3 + p3_off, p3_g, p3_bits);
             interleaver_ma3();
             break;
         }
-        p3_off += p3_bits;
+        if (!rdb)
+            p3_off += p3_bits;
 
         for (int symbol = 0; symbol < AM_SYMBOLS_PER_FRAME; symbol++) {
             for (int col = 0; col < 25; col++) {
@@ -153,13 +173,15 @@ int l1_am_encoder_impl::general_work(int noutput_items,
                         -std::conj(qam64[pl_matrix[col][symbol]]);
                     out[out_off + 128 + 57 + col] = qam64[pu_matrix[col][symbol]];
 
-                    /* 1012s.pdf table 12-6 */
-                    out[out_off + 128 + 2 + col] = qpsk_am[t_matrix[col][symbol]];
-                    out[out_off + 128 + 28 + col] = qam16[s_matrix[col][symbol]];
-                    out[out_off + 128 - 2 - col] =
-                        -std::conj(qpsk_am[t_matrix[col][symbol]]);
-                    out[out_off + 128 - 28 - col] =
-                        -std::conj(qam16[s_matrix[col][symbol]]);
+                    if (!rdb) {
+                        /* 1012s.pdf table 12-6 */
+                        out[out_off + 128 + 2 + col] = qpsk_am[t_matrix[col][symbol]];
+                        out[out_off + 128 + 28 + col] = qam16[s_matrix[col][symbol]];
+                        out[out_off + 128 - 2 - col] =
+                            -std::conj(qpsk_am[t_matrix[col][symbol]]);
+                        out[out_off + 128 - 28 - col] =
+                            -std::conj(qam16[s_matrix[col][symbol]]);
+                    }
                     break;
                 case 3:
                     /* 1012s.pdf table 12-3 */
@@ -167,10 +189,12 @@ int l1_am_encoder_impl::general_work(int noutput_items,
                         -std::conj(qam64[pl_matrix[col][symbol]]);
                     out[out_off + 128 + 2 + col] = qam64[pu_matrix[col][symbol]];
 
-                    /* 1012s.pdf table 12-8 */
-                    out[out_off + 128 - 28 - col] =
-                        -std::conj(qam64[t_matrix[col][symbol]]);
-                    out[out_off + 128 + 28 + col] = qam64[s_matrix[col][symbol]];
+                    if (!rdb) {
+                        /* 1012s.pdf table 12-8 */
+                        out[out_off + 128 - 28 - col] =
+                            -std::conj(qam64[t_matrix[col][symbol]]);
+                        out[out_off + 128 + 28 + col] = qam64[s_matrix[col][symbol]];
+                    }
                     break;
                 }
             }
@@ -180,9 +204,11 @@ int l1_am_encoder_impl::general_work(int noutput_items,
             switch (sm) {
             case 1:
                 /* 1012s.pdf table 12-7 */
-                out[out_off + 128 - 27] = -std::conj(pids_point_0);
+                if (!rdb) {
+                    out[out_off + 128 - 27] = -std::conj(pids_point_0);
+                    out[out_off + 128 + 27] = pids_point_0;
+                }
                 out[out_off + 128 - 53] = -std::conj(pids_point_1);
-                out[out_off + 128 + 27] = pids_point_0;
                 out[out_off + 128 + 53] = pids_point_1;
                 break;
             case 3:
@@ -206,9 +232,10 @@ int l1_am_encoder_impl::general_work(int noutput_items,
         message_port_pub(pmt::intern("clock"), pmt::from_long(1));
     }
 
-    consume(0, frames * p1_mod);
-    consume(1, frames * p3_mod);
-    consume(2, frames * AM_BLOCKS_PER_FRAME);
+    consume(0, frames * AM_BLOCKS_PER_FRAME);
+    consume(1, frames * p1_mod);
+    if (!rdb)
+        consume(2, frames * p3_mod);
 
     return noutput_items;
 }
@@ -309,8 +336,10 @@ void l1_am_encoder_impl::interleaver_ma1()
 {
     memset(pu_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
     memset(pl_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
-    memset(s_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
-    memset(t_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
+    if (!rdb) {
+        memset(s_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
+        memset(t_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
+    }
 
     for (int i = 0; i < 6000; i++) {
         for (int j = 0; j < 3; j++) {
@@ -319,11 +348,13 @@ void l1_am_encoder_impl::interleaver_ma1()
             bu[DIVERSITY_DELAY + i * 3 + j] = p1_g[i * 12 + bu_delay[j]];
             mu[i * 3 + j] = p1_g[i * 12 + mu_delay[j]];
         }
-        for (int j = 0; j < 2; j++) {
-            el[i * 2 + j] = p3_g[i * 6 + el_delay[j]];
-        }
-        for (int j = 0; j < 4; j++) {
-            eu[i * 4 + j] = p3_g[i * 6 + eu_delay[j]];
+        if (!rdb) {
+            for (int j = 0; j < 2; j++) {
+                el[i * 2 + j] = p3_g[i * 6 + el_delay[j]];
+            }
+            for (int j = 0; j < 4; j++) {
+                eu[i * 4 + j] = p3_g[i * 6 + eu_delay[j]];
+            }
         }
     }
 
@@ -349,17 +380,19 @@ void l1_am_encoder_impl::interleaver_ma1()
         p = 3 + (n % 3);
         bit_map(pu_matrix, b, k, mu[n] << p);
     }
-    for (int n = 0; n < 12000; n++) {
-        b = (3 * n + n / 3000) % 8;
-        k = (n + (n / 6000)) % 750;
-        p = n % 2;
-        bit_map(t_matrix, b, k, el[n] << p);
-    }
-    for (int n = 0; n < 24000; n++) {
-        b = (3 * n + n / 3000 + 2 * (n / 12000)) % 8;
-        k = (n + (n / 6000)) % 750;
-        p = n % 4;
-        bit_map(s_matrix, b, k, eu[n] << p);
+    if (!rdb) {
+        for (int n = 0; n < 12000; n++) {
+            b = (3 * n + n / 3000) % 8;
+            k = (n + (n / 6000)) % 750;
+            p = n % 2;
+            bit_map(t_matrix, b, k, el[n] << p);
+        }
+        for (int n = 0; n < 24000; n++) {
+            b = (3 * n + n / 3000 + 2 * (n / 12000)) % 8;
+            k = (n + (n / 6000)) % 750;
+            p = n % 4;
+            bit_map(s_matrix, b, k, eu[n] << p);
+        }
     }
 
     /* training symbols */
@@ -367,8 +400,10 @@ void l1_am_encoder_impl::interleaver_ma1()
         for (int k = 750; k < 800; k++) {
             bit_map(pu_matrix, block, k, 0b100101);
             bit_map(pl_matrix, block, k, 0b100101);
-            bit_map(s_matrix, block, k, 0b1001);
-            bit_map(t_matrix, block, k, 0b10);
+            if (!rdb) {
+                bit_map(s_matrix, block, k, 0b1001);
+                bit_map(t_matrix, block, k, 0b10);
+            }
         }
     }
 
@@ -380,8 +415,10 @@ void l1_am_encoder_impl::interleaver_ma3()
 {
     memset(pu_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
     memset(pl_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
-    memset(s_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
-    memset(t_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
+    if (!rdb) {
+        memset(s_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
+        memset(t_matrix, 0, 25 * AM_SYMBOLS_PER_FRAME);
+    }
 
     for (int i = 0; i < 6000; i++) {
         for (int j = 0; j < 3; j++) {
@@ -390,10 +427,12 @@ void l1_am_encoder_impl::interleaver_ma3()
             bu[DIVERSITY_DELAY + i * 3 + j] = p1_g[i * 12 + bu_delay[j]];
             mu[i * 3 + j] = p1_g[i * 12 + mu_delay[j]];
 
-            ebl[DIVERSITY_DELAY + i * 3 + j] = p3_g[i * 12 + bl_delay[j]];
-            eml[i * 3 + j] = p3_g[i * 12 + ml_delay[j]];
-            ebu[DIVERSITY_DELAY + i * 3 + j] = p3_g[i * 12 + bu_delay[j]];
-            emu[i * 3 + j] = p3_g[i * 12 + mu_delay[j]];
+            if (!rdb) {
+                ebl[DIVERSITY_DELAY + i * 3 + j] = p3_g[i * 12 + bl_delay[j]];
+                eml[i * 3 + j] = p3_g[i * 12 + ml_delay[j]];
+                ebu[DIVERSITY_DELAY + i * 3 + j] = p3_g[i * 12 + bu_delay[j]];
+                emu[i * 3 + j] = p3_g[i * 12 + mu_delay[j]];
+            }
         }
     }
 
@@ -419,25 +458,27 @@ void l1_am_encoder_impl::interleaver_ma3()
         p = 3 + (n % 3);
         bit_map(pu_matrix, b, k, mu[n] << p);
 
-        b = (3 * n + 3) % 8;
-        k = (n + n / 3000 + 3) % 750;
-        p = n % 3;
-        bit_map(t_matrix, b, k, ebl[n] << p);
+        if (!rdb) {
+            b = (3 * n + 3) % 8;
+            k = (n + n / 3000 + 3) % 750;
+            p = n % 3;
+            bit_map(t_matrix, b, k, ebl[n] << p);
 
-        b = (3 * n + 3) % 8;
-        k = (n + n / 3000 + 3) % 750;
-        p = 3 + (n % 3);
-        bit_map(t_matrix, b, k, eml[n] << p);
+            b = (3 * n + 3) % 8;
+            k = (n + n / 3000 + 3) % 750;
+            p = 3 + (n % 3);
+            bit_map(t_matrix, b, k, eml[n] << p);
 
-        b = (3 * n) % 8;
-        k = (n + n / 3000 + 2) % 750;
-        p = n % 3;
-        bit_map(s_matrix, b, k, ebu[n] << p);
+            b = (3 * n) % 8;
+            k = (n + n / 3000 + 2) % 750;
+            p = n % 3;
+            bit_map(s_matrix, b, k, ebu[n] << p);
 
-        b = (3 * n) % 8;
-        k = (n + n / 3000 + 2) % 750;
-        p = 3 + (n % 3);
-        bit_map(s_matrix, b, k, emu[n] << p);
+            b = (3 * n) % 8;
+            k = (n + n / 3000 + 2) % 750;
+            p = 3 + (n % 3);
+            bit_map(s_matrix, b, k, emu[n] << p);
+        }
     }
 
     /* training symbols */
@@ -445,15 +486,19 @@ void l1_am_encoder_impl::interleaver_ma3()
         for (int k = 750; k < 800; k++) {
             bit_map(pu_matrix, block, k, 0b100101);
             bit_map(pl_matrix, block, k, 0b100101);
-            bit_map(s_matrix, block, k, 0b100101);
-            bit_map(t_matrix, block, k, 0b100101);
+            if (!rdb) {
+                bit_map(s_matrix, block, k, 0b100101);
+                bit_map(t_matrix, block, k, 0b100101);
+            }
         }
     }
 
     memmove(bl, bl + 18000, DIVERSITY_DELAY);
     memmove(bu, bu + 18000, DIVERSITY_DELAY);
-    memmove(ebl, ebl + 18000, DIVERSITY_DELAY);
-    memmove(ebu, ebu + 18000, DIVERSITY_DELAY);
+    if (!rdb) {
+        memmove(ebl, ebl + 18000, DIVERSITY_DELAY);
+        memmove(ebu, ebu + 18000, DIVERSITY_DELAY);
+    }
 }
 
 void l1_am_encoder_impl::interleaver_pids(unsigned char* in,
@@ -495,7 +540,7 @@ void l1_am_encoder_impl::interleaver_pids(unsigned char* in,
 
 /* 1012s.pdf table 11-1 */
 void l1_am_encoder_impl::sc_data_seq(
-    unsigned char* out, int pli, int hppi, int abbi, int rdbi, int bc, int smi)
+    unsigned char* out, int pli, int hppi, int aabi, int rdbi, int bc, int smi)
 {
     out[0] = 0; // sync
     out[1] = 1; // sync
@@ -512,7 +557,7 @@ void l1_am_encoder_impl::sc_data_seq(
 
     out[10] = 0;                           // reserved
     out[11] = hppi;                        // high power pids indicator
-    out[12] = abbi;                        // analog audio bandwidth indicator
+    out[12] = aabi;                        // analog audio bandwidth indicator
     out[13] = out[10] ^ out[11] ^ out[12]; // parity
 
     out[14] = 0; // sync
@@ -547,41 +592,76 @@ void l1_am_encoder_impl::set_channel_power()
 
     // Table 4-6 from 1082s.pdf
     switch (sm) {
-    case 1:
+    case 1: {
+        float db_pu = -30;
+        float db_pl = -30;
+        float db_s = (pl ? -37 : -43);
+        float db_t[25];
+        float db_ref = -26;
+        float db_pids1 = (pl ? -37 : -43);
+        float db_pids2_diff;
+
         for (int col = 0; col < 25; col++) {
-            channel_power[128 + 57 + col] = -30 - qam64_power;
-            channel_power[128 - 57 - col] = -30 - qam64_power;
-
-            channel_power[128 + 28 + col] = -43 - qam16_power;
-            channel_power[128 - 28 - col] = -43 - qam16_power;
-
-            channel_power[128 + 2 + col] = (col < 12 ? (-44 - 0.5 * col) : -50) - qpsk_power;
-            channel_power[128 - 2 - col] = (col < 12 ? (-44 - 0.5 * col) : -50) - qpsk_power;
+            if (pl) {
+                db_t[col] = -44;
+            } else {
+                if (col < 12) {
+                    db_t[col] = -44 - (0.5 * col);
+                } else {
+                    db_t[col] = -50;
+                }
+            }
         }
 
-        channel_power[128 + 1] = -26 - bpsk_power;
-        channel_power[128 - 1] = -26 - bpsk_power;
-
-        channel_power[128 + 27] = -43 - qam16_power;
-        channel_power[128 - 27] = -43 - qam16_power;
-        channel_power[128 + 53] = -43 - qam16_power;
-        channel_power[128 - 53] = -43 - qam16_power;
-        break;
-    case 3:
-        for (int col = 0; col < 25; col++) {
-            channel_power[128 + 2 + col] = -15 - qam64_power;
-            channel_power[128 - 2 - col] = -15 - qam64_power;
-
-            channel_power[128 + 28 + col] = -30 - qam64_power;
-            channel_power[128 - 28 - col] = -30 - qam64_power;
+        if (rdb || hpp) {
+            db_pids2_diff = 0;
+        } else if (pl) {
+            db_pids2_diff = -7;
+        } else {
+            db_pids2_diff = -13;
         }
 
-        channel_power[128 + 1] = -15 - bpsk_power;
-        channel_power[128 - 1] = -15 - bpsk_power;
+        for (int col = 0; col < 25; col++) {
+            channel_power[128 + 57 + col] = db_pu - qam64_power;
+            channel_power[128 - 57 - col] = db_pl - qam64_power;
 
-        channel_power[128 + 27] = -30 - qam16_power;
-        channel_power[128 - 27] = -30 - qam16_power;
+            channel_power[128 + 28 + col] = db_s - qam16_power;
+            channel_power[128 - 28 - col] = db_s - qam16_power;
+
+            channel_power[128 + 2 + col] = db_t[col] - qpsk_power;
+            channel_power[128 - 2 - col] = db_t[col] - qpsk_power;
+        }
+
+        channel_power[128 + 1] = db_ref - bpsk_power;
+        channel_power[128 - 1] = db_ref - bpsk_power;
+
+        channel_power[128 + 27] = db_pids1 - qam16_power;
+        channel_power[128 - 27] = db_pids1 - qam16_power;
+        channel_power[128 + 53] = db_pu + db_pids2_diff - qam16_power;
+        channel_power[128 - 53] = db_pl + db_pids2_diff - qam16_power;
         break;
+    }
+    case 3: {
+        float db_p = -15;
+        float db_e = -30;
+        float db_ref = -15;
+        float db_pids_diff = ((rdb || hpp) ? 0 : -15);
+
+        for (int col = 0; col < 25; col++) {
+            channel_power[128 + 2 + col] = db_p - qam64_power;
+            channel_power[128 - 2 - col] = db_p - qam64_power;
+
+            channel_power[128 + 28 + col] = db_e - qam64_power;
+            channel_power[128 - 28 - col] = db_e - qam64_power;
+        }
+
+        channel_power[128 + 1] = db_ref - bpsk_power;
+        channel_power[128 - 1] = db_ref - bpsk_power;
+
+        channel_power[128 + 27] = db_p + db_pids_diff - qam16_power;
+        channel_power[128 - 27] = db_p + db_pids_diff - qam16_power;
+        break;
+    }
     }
 
     for (int i = 0; i < AM_FFT_SIZE; i++) {

@@ -175,8 +175,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [592, 160.0]
-    rotation: 180
+    coordinate: [744, 352.0]
+    rotation: 0
     state: enabled
 - name: blocks_rotator_cc_0
   id: blocks_rotator_cc
@@ -210,8 +210,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 8.0]
-    rotation: 180
+    coordinate: [264, 160.0]
+    rotation: 0
     state: enabled
 - name: blocks_wavfile_source_1
   id: blocks_wavfile_source
@@ -249,8 +249,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 368.0]
-    rotation: 0
+    coordinate: [1016, 416.0]
+    rotation: 180
     state: enabled
 - name: import_0
   id: import
@@ -306,8 +306,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [320, 256.0]
-    rotation: 0
+    coordinate: [1120, 32.0]
+    rotation: 180
     state: true
 - name: network_socket_pdu_1
   id: network_socket_pdu
@@ -326,8 +326,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 104.0]
-    rotation: 180
+    coordinate: [280, 328.0]
+    rotation: 0
     state: true
 - name: nrsc5_am_pulse_shaper_0
   id: nrsc5_am_pulse_shaper
@@ -341,8 +341,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [592, 408.0]
-    rotation: 0
+    coordinate: [832, 456.0]
+    rotation: 180
     state: enabled
 - name: nrsc5_hdc_encoder_0
   id: nrsc5_hdc_encoder
@@ -358,23 +358,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [768, 8.0]
-    rotation: 180
+    coordinate: [464, 160.0]
+    rotation: 0
     state: enabled
 - name: nrsc5_l1_am_encoder_ma1_0
   id: nrsc5_l1_am_encoder_ma1
   parameters:
+    aab: '0'
     affinity: ''
     alias: ''
     comment: ''
+    hpp: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
+    pl: '0'
+    rdb: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [288, 120.0]
-    rotation: 180
+    coordinate: [1008, 216.0]
+    rotation: 0
     state: enabled
 - name: nrsc5_l2_encoder_0
   id: nrsc5_l2_encoder
@@ -393,8 +397,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 16.0]
-    rotation: 180
+    coordinate: [736, 192.0]
+    rotation: 0
     state: enabled
 - name: nrsc5_psd_encoder_0
   id: nrsc5_psd_encoder
@@ -412,8 +416,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [832, 88.0]
-    rotation: 180
+    coordinate: [520, 312.0]
+    rotation: 0
     state: enabled
 - name: nrsc5_sis_encoder_0
   id: nrsc5_sis_encoder
@@ -454,8 +458,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 216.0]
-    rotation: 0
+    coordinate: [736, 32.0]
+    rotation: 180
     state: true
 - name: osmosdr_sink_0
   id: osmosdr_sink
@@ -664,7 +668,7 @@ blocks:
     gain7: '10'
     gain8: '10'
     gain9: '10'
-    if_gain0: '1'
+    if_gain0: '35'
     if_gain1: '20'
     if_gain10: '20'
     if_gain11: '20'
@@ -805,7 +809,7 @@ connections:
 - [blocks_delay_0, '0', low_pass_filter_1, '0']
 - [blocks_float_to_complex_0, '0', rational_resampler_xxx_0, '0']
 - [blocks_multiply_const_vxx_0, '0', blocks_rotator_cc_0, '0']
-- [blocks_null_source_0, '0', nrsc5_l1_am_encoder_ma1_0, '1']
+- [blocks_null_source_0, '0', nrsc5_l1_am_encoder_ma1_0, '2']
 - [blocks_rotator_cc_0, '0', osmosdr_sink_0, '0']
 - [blocks_wavfile_source_0, '0', nrsc5_hdc_encoder_0, '0']
 - [blocks_wavfile_source_1, '0', blocks_delay_0, '0']
@@ -818,10 +822,10 @@ connections:
 - [nrsc5_l1_am_encoder_ma1_0, '0', fft_vxx_0, '0']
 - [nrsc5_l1_am_encoder_ma1_0, clock, nrsc5_psd_encoder_0, clock]
 - [nrsc5_l1_am_encoder_ma1_0, clock, nrsc5_sis_encoder_0, clock]
-- [nrsc5_l2_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '0']
+- [nrsc5_l2_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '1']
 - [nrsc5_l2_encoder_0, ready, nrsc5_sis_encoder_0, ready]
 - [nrsc5_psd_encoder_0, '0', nrsc5_l2_encoder_0, '1']
-- [nrsc5_sis_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '2']
+- [nrsc5_sis_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '0']
 - [nrsc5_sis_encoder_0, aas, nrsc5_l2_encoder_0, aas]
 - [rational_resampler_xxx_0, '0', rational_resampler_xxx_0_0, '0']
 - [rational_resampler_xxx_0_0, '0', blocks_add_xx_0, '1']
