@@ -13,6 +13,7 @@ parameters:
     label: First prog. no.
     dtype: int
     default: 0
+    hide: ${'none' if num_progs > 0 else 'all'}
 -   id: size
     label: Frame size
     dtype: int
@@ -28,17 +29,19 @@ parameters:
     options: [nrsc5.blend.DISABLE, nrsc5.blend.SELECT, nrsc5.blend.ENABLE]
     option_labels: ["Disable", "Select", "Enable"]
     default: nrsc5.blend.ENABLE
-    hide: ${ ('none' if first_prog == 0 else 'all') }
+    hide: ${ ('none' if num_progs > 0 and first_prog == 0 else 'all') }
 
 inputs:
 -   label: hdc
     domain: stream
     dtype: byte
     multiplicity: ${ num_progs }
+    hide: ${num_progs == 0}
 -   label: psd
     domain: stream
     dtype: byte
     multiplicity: ${ num_progs }
+    hide: ${num_progs == 0}
 -   domain: message
     id: aas
     optional: true
@@ -52,7 +55,7 @@ outputs:
     optional: true
 asserts:
 - ${ 0 <= first_prog <= 7 }
-- ${ 1 <= num_progs <= 8 - first_prog }
+- ${ 0 <= num_progs <= 8 - first_prog }
 - ${ data_bytes < (size - 22) // 8 }
 
 templates:
