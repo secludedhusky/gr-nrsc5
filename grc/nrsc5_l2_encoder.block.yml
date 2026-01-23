@@ -62,7 +62,7 @@ outputs:
 asserts:
 - ${ 0 <= first_prog <= 7 }
 - ${ 0 <= num_progs <= 8 - first_prog }
-- ${ data_bytes < (size - 22) // 8 }
+- ${ data_bytes <= (size - 22) // 8 - 1 - ccc_width }
 
 templates:
     imports: import nrsc5
