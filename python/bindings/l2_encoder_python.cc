@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(l2_encoder.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(b0ded61b840bd7589aff93c0979dcf5d)                     */
+/* BINDTOOL_HEADER_FILE_HASH(e09b3f444566cbfeb2a2798367382fa7)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -47,6 +47,7 @@ void bind_l2_encoder(py::module& m)
            py::arg("size"),
            py::arg("data_bytes") = 0,
            py::arg("blend_control") = ::gr::nrsc5::blend::ENABLE,
+           py::arg("ccc_width") = 24,
            D(l2_encoder,make)
         )
         

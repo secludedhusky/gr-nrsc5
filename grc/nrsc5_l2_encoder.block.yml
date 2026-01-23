@@ -23,6 +23,12 @@ parameters:
     label: Data bytes
     dtype: int
     default: 0
+-   id: ccc_width
+    label: CCC width
+    dtype: int
+    default: 24
+    options: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
+    hide: ${'part' if data_bytes > 0 else 'all'}
 -   id: blend_control
     label: Blend control
     dtype: enum
@@ -60,6 +66,6 @@ asserts:
 
 templates:
     imports: import nrsc5
-    make: nrsc5.l2_encoder(${num_progs}, ${first_prog}, ${size}, ${data_bytes}, ${blend_control})
+    make: nrsc5.l2_encoder(${num_progs}, ${first_prog}, ${size}, ${data_bytes}, ${blend_control}, ccc_width=${ccc_width})
 
 file_format: 1

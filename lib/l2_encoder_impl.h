@@ -118,7 +118,8 @@ public:
                     const int first_prog,
                     const int size,
                     const int data_bytes = 0,
-                    const blend blend_control = blend::ENABLE);
+                    const blend blend_control = blend::ENABLE,
+                    const int ccc_width = 24);
     ~l2_encoder_impl();
 
     // Where all the action really happens

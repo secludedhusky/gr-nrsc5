@@ -557,6 +557,7 @@ blocks:
     affinity: ''
     alias: ''
     blend_control: nrsc5.blend.ENABLE
+    ccc_width: '24'
     comment: ''
     data_bytes: '2000'
     first_prog: '0'

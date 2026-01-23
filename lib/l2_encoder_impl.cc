@@ -26,10 +26,11 @@ l2_encoder::sptr l2_encoder::make(const int num_progs,
                                   const int first_prog,
                                   const int size,
                                   const int data_bytes,
-                                  const blend blend_control)
+                                  const blend blend_control,
+                                  const int ccc_width)
 {
     return gnuradio::get_initial_sptr(
-        new l2_encoder_impl(num_progs, first_prog, size, data_bytes, blend_control));
+        new l2_encoder_impl(num_progs, first_prog, size, data_bytes, blend_control, ccc_width));
 }
 
 
@@ -40,7 +41,8 @@ l2_encoder_impl::l2_encoder_impl(const int num_progs,
                                  const int first_prog,
                                  const int size,
                                  const int data_bytes,
-                                 const blend blend_control)
+                                 const blend blend_control,
+                                 const int ccc_width)
     : gr::block("l2_encoder",
                 gr::io_signature::make(0, 16, sizeof(unsigned char)),
                 gr::io_signature::make(1, 1, sizeof(unsigned char) * size))
@@ -65,7 +67,7 @@ l2_encoder_impl::l2_encoder_impl(const int num_progs,
     memset(start_seq_no, 0, sizeof(start_seq_no));
     target_seq_no = 0;
     memset(partial_bytes, 0, sizeof(partial_bytes));
-    ccc_width = 24;
+    this->ccc_width = ccc_width;
     ccc_count = 0;
     ccc = hdlc_encode({ 0x00,
                         0x00,
