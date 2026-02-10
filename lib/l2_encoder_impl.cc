@@ -25,10 +25,12 @@ namespace nrsc5 {
 l2_encoder::sptr l2_encoder::make(const int num_progs,
                                   const int first_prog,
                                   const int size,
-                                  const int data_bytes)
+                                  const int data_bytes,
+                                  const blend blend_control,
+                                  const int ccc_width)
 {
     return gnuradio::get_initial_sptr(
-        new l2_encoder_impl(num_progs, first_prog, size, data_bytes));
+        new l2_encoder_impl(num_progs, first_prog, size, data_bytes, blend_control, ccc_width));
 }
 
 
@@ -38,9 +40,11 @@ l2_encoder::sptr l2_encoder::make(const int num_progs,
 l2_encoder_impl::l2_encoder_impl(const int num_progs,
                                  const int first_prog,
                                  const int size,
-                                 const int data_bytes)
+                                 const int data_bytes,
+                                 const blend blend_control,
+                                 const int ccc_width)
     : gr::block("l2_encoder",
-                gr::io_signature::make(2, 16, sizeof(unsigned char)),
+                gr::io_signature::make(0, 16, sizeof(unsigned char)),
                 gr::io_signature::make(1, 1, sizeof(unsigned char) * size))
 {
     message_port_register_in(pmt::intern("aas"));
@@ -54,6 +58,7 @@ l2_encoder_impl::l2_encoder_impl(const int num_progs,
     memset(program_type, 0, sizeof(program_type));
     this->size = size;
     this->data_bytes = data_bytes;
+    this->blend_control = blend_control;
     payload_bytes = (size - 22) / 8;
     out_buf = (unsigned char*)malloc(payload_bytes);
     rs_enc = init_rs_char(8, 0x11d, 1, 1, 8);
@@ -62,7 +67,7 @@ l2_encoder_impl::l2_encoder_impl(const int num_progs,
     memset(start_seq_no, 0, sizeof(start_seq_no));
     target_seq_no = 0;
     memset(partial_bytes, 0, sizeof(partial_bytes));
-    ccc_width = 24;
+    this->ccc_width = ccc_width;
     ccc_count = 0;
     ccc = hdlc_encode({ 0x00,
                         0x00,
@@ -122,8 +127,8 @@ int l2_encoder_impl::general_work(int noutput_items,
                                   gr_vector_const_void_star& input_items,
                                   gr_vector_void_star& output_items)
 {
-    const unsigned char** hdc = (const unsigned char**)&input_items[0];
-    const unsigned char** psd = (const unsigned char**)&input_items[num_progs];
+    const unsigned char** hdc = (num_progs > 0) ? (const unsigned char**)&input_items[0] : nullptr;
+    const unsigned char** psd = (num_progs > 0) ? (const unsigned char**)&input_items[num_progs] : nullptr;
     unsigned char* out = (unsigned char*)output_items[0];
 
     int hdc_off[MAX_PROGRAMS] = { 0 };
@@ -157,13 +162,15 @@ int l2_encoder_impl::general_work(int noutput_items,
                     break;
                 off += length;
 
-                if (14 + len_locators(nop + 1) + 3 + psd_bytes + audio_length + 2 >
+                if (RS_PARITY_LEN + CONTROL_WORD_LEN + len_locators(nop + 1) + HEF_LEN +
+                        psd_bytes + audio_length + 2 >
                     bytes_left)
                     break;
-                if (14 + len_locators(nop + 1) + 3 + psd_bytes + audio_length + length +
-                        1 >
+                if (RS_PARITY_LEN + CONTROL_WORD_LEN + len_locators(nop + 1) + HEF_LEN +
+                        psd_bytes + audio_length + length + 1 >
                     bytes_left) {
-                    begin_bytes = bytes_left - (14 + len_locators(nop + 1) + 3 +
+                    begin_bytes = bytes_left - (RS_PARITY_LEN + CONTROL_WORD_LEN +
+                                                len_locators(nop + 1) + HEF_LEN +
                                                 psd_bytes + audio_length + 1);
                     end_bytes = length - begin_bytes;
                     nop++;
@@ -174,13 +181,14 @@ int l2_encoder_impl::general_work(int noutput_items,
                 audio_length += length + 1;
             }
 
-            int la_loc = 14 + len_locators(nop) + 3 + psd_bytes - 1;
+            int la_loc = RS_PARITY_LEN + CONTROL_WORD_LEN + len_locators(nop) + HEF_LEN +
+                         psd_bytes - 1;
 
-            write_control_word(out_program + 8,
+            write_control_word(out_program + RS_PARITY_LEN,
                                codec_mode,
                                /*stream_id*/ 0,
                                pdu_seq_no,
-                               /*blend_control*/ program_number == 0 ? 2 : 0,
+                               program_number == 0 ? static_cast<int>(blend_control) : 0,
                                /*digital_gain_or_per_stream_delay*/ 0,
                                /*common_delay*/ program_number == 0 ? 24 : 0,
                                /*latency*/ 4,
@@ -212,26 +220,27 @@ int l2_encoder_impl::general_work(int noutput_items,
                     out_program[++end] = hdc[p][hdc_off[p]++];
                 }
                 out_program[++end] = crc_reg;
-                write_locator(out_program + 14, i, end);
+                write_locator(out_program + RS_PARITY_LEN + CONTROL_WORD_LEN, i, end);
             }
             partial_bytes[p] = end_bytes;
 
-            write_hef(out_program + 14 + len_locators(nop),
+            write_hef(out_program + RS_PARITY_LEN + CONTROL_WORD_LEN + len_locators(nop),
                       program_number,
                       /*access*/ 0,
                       program_type[program_number]);
 
-            memcpy(out_program + (14 + len_locators(nop) + 3),
+            memcpy(out_program +
+                       (RS_PARITY_LEN + CONTROL_WORD_LEN + len_locators(nop) + HEF_LEN),
                    psd[p] + psd_off[p],
                    psd_bytes);
             psd_off[p] += psd_bytes;
 
             // Reed-Solomon encoding
-            for (int i = 95; i >= 8; i--) {
+            for (int i = RS_CODEWORD_LEN - 1; i >= RS_PARITY_LEN; i--) {
                 rs_buf[255 - i - 1] = out_program[i];
             }
-            encode_rs_char(rs_enc, rs_buf, rs_buf + 247);
-            for (int i = 7; i >= 0; i--) {
+            encode_rs_char(rs_enc, rs_buf, rs_buf + 255 - RS_PARITY_LEN);
+            for (int i = RS_PARITY_LEN - 1; i >= 0; i--) {
                 out_program[i] = rs_buf[255 - i - 1];
             }
 
@@ -320,8 +329,18 @@ int l2_encoder_impl::general_work(int noutput_items,
             }
         }
 
-        header_spread(
-            out_buf, out + out_off, (data_bytes > 0) ? CW2_AUDIO_FIXED : CW0_AUDIO);
+        const unsigned char *pci;
+        if (num_progs == 0) {
+            pci = CW4_FIXED;
+        } else {
+            if (data_bytes > 0) {
+                pci = CW2_AUDIO_FIXED;
+            } else {
+                pci = CW0_AUDIO;
+            }
+        }
+
+        header_spread(out_buf, out + out_off, pci);
 
         pdu_seq_no = (pdu_seq_no + 1) % pdu_seq_len;
     }
@@ -395,39 +414,36 @@ void l2_encoder_impl::header_spread(const unsigned char* in,
 
     /* 1014s.pdf table 5-4 */
     if (size >= 72000) {
+        n_start = 8 * ((size - 30000 + 7) / 8);
+
         switch (size % 8) {
         case 0:
-            n_start = size - 30000;
             n_offset = 1247;
             header_bits = 24;
             break;
         case 7:
-            n_start = 8 * (size / 8) - 29999;
             n_offset = 1303;
             header_bits = 23;
             break;
         default:
-            n_start = 8 * (size / 8) - 29999;
             n_offset = 1359;
             header_bits = 22;
         }
     } else {
+        n_start = 120;
+
         switch (size % 8) {
         case 0:
-            n_start = 120;
-            n_offset = ((size - 192) / 24) - 1;
             header_bits = 24;
             break;
         case 7:
-            n_start = 120;
-            n_offset = ((size / 8 - 14) / 23) * 8 - 1;
             header_bits = 23;
             break;
         default:
-            n_start = 120;
-            n_offset = ((size / 8 - 14) / 22) * 8 - 1;
             header_bits = 22;
         }
+
+        n_offset = 8 * (((size - 120 + 7) / 8) / header_bits) - 1;
     }
 
     int out_off = 0;

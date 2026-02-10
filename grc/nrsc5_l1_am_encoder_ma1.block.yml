@@ -2,7 +2,40 @@ id: nrsc5_l1_am_encoder_ma1
 label: 'Layer 1 AM encoder: MA1'
 category: '[NRSC-5]'
 
+parameters:
+-   id: rdb
+    label: Reduced digital bandwidth
+    dtype: int
+    default: '0'
+    options: ['0', '1']
+    option_labels: ['No', 'Yes']
+-   id: hpp
+    label: High-power PIDS
+    dtype: int
+    default: '0'
+    options: ['0', '1']
+    option_labels: ['No', 'Yes']
+    hide: ${'all' if rdb else 'none'}
+-   id: pl
+    label: Power level
+    dtype: int
+    default: '0'
+    options: ['0', '1']
+    option_labels: ['Low', 'High']
+    hide: ${'all' if rdb else 'none'}
+-   id: aab
+    label: Analog audio bandwidth
+    dtype: int
+    default: '0'
+    options: ['0', '1']
+    option_labels: ['5 kHz', '8 kHz']
+    hide: ${'all' if rdb else 'none'}
+
 inputs:
+-   label: pids
+    domain: stream
+    dtype: byte
+    vlen: 80
 -   label: p1
     domain: stream
     dtype: byte
@@ -11,10 +44,7 @@ inputs:
     domain: stream
     dtype: byte
     vlen: 24000
--   label: pids
-    domain: stream
-    dtype: byte
-    vlen: 80
+    hide: ${rdb}
 
 outputs:
 -   domain: stream
@@ -26,6 +56,6 @@ outputs:
 
 templates:
   imports: import nrsc5
-  make: nrsc5.l1_am_encoder(1)
+  make: nrsc5.l1_am_encoder(1, rdb=${rdb}, hpp=${hpp}, pl=${pl}, aab=${aab})
 
 file_format: 1

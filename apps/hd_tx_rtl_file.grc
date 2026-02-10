@@ -19,7 +19,7 @@ options:
     realtime_scheduling: ''
     run: 'True'
     run_command: '{python} -u {filename}'
-    run_options: prompt
+    run_options: run
     sizing_mode: fixed
     thread_safe_setters: ''
     title: ''
@@ -28,27 +28,90 @@ options:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 12]
+    coordinate: [8, 8.0]
     rotation: 0
     state: enabled
 
 blocks:
-- name: blocks_add_const_vxx_0_0
-  id: blocks_add_const_vxx
+- name: audio_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '44100'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [112, 104.0]
+    rotation: 0
+    state: true
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '1488375'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 104.0]
+    rotation: 0
+    state: enabled
+- name: analog_noise_source_x_0
+  id: analog_noise_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    amp: 10**((max(lsb_power_db, usb_power_db)-snr_db)/20) * math.sqrt(4096/191)
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_type: analog.GR_GAUSSIAN
+    seed: '1'
+    type: complex
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 720.0]
+    rotation: 0
+    state: enabled
+- name: analog_wfm_tx_0_0
+  id: analog_wfm_tx
+  parameters:
+    affinity: ''
+    alias: ''
+    audio_rate: audio_rate
+    comment: ''
+    fh: '-1.0'
+    max_dev: 75e3
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    quad_rate: audio_rate * 4
+    tau: 75e-6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [568, 960.0]
+    rotation: 180
+    state: enabled
+- name: blocks_add_xx_0
+  id: blocks_add_xx
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    const: '127.5'
     maxoutbuf: '0'
     minoutbuf: '0'
-    type: float
+    num_inputs: '3'
+    type: complex
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [504, 628.0]
+    coordinate: [208, 712.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_float_0
@@ -64,7 +127,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [184, 616.0]
+    coordinate: [472, 728.0]
     rotation: 0
     state: enabled
 - name: blocks_conjugate_cc_0
@@ -79,7 +142,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [536, 504.0]
+    coordinate: [536, 600.0]
+    rotation: 180
+    state: enabled
+- name: blocks_delay_0
+  id: blocks_delay
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    delay: int(audio_rate * 4.458)
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_ports: '1'
+    showports: 'False'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [832, 992.0]
     rotation: 180
     state: enabled
 - name: blocks_file_sink_0
@@ -89,7 +172,7 @@ blocks:
     alias: ''
     append: 'False'
     comment: ''
-    file: hd_generated.cu8
+    file: filename
     type: byte
     unbuffered: 'False'
     vlen: '1'
@@ -97,23 +180,44 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [832, 612.0]
-    rotation: 0
+    coordinate: [352, 808.0]
+    rotation: 180
     state: enabled
 - name: blocks_float_to_uchar_0
   id: blocks_float_to_uchar
   parameters:
     affinity: ''
     alias: ''
+    bias: '127.5'
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
+    scale: '128'
+    vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [664, 632.0]
+    coordinate: [792, 728.0]
     rotation: 0
+    state: enabled
+- name: blocks_head_0
+  id: blocks_head
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: samp_rate * 2 * seconds
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [552, 824.0]
+    rotation: 180
     state: enabled
 - name: blocks_interleave_0
   id: blocks_interleave
@@ -131,7 +235,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [368, 616.0]
+    coordinate: [656, 728.0]
     rotation: 0
     state: enabled
 - name: blocks_keep_m_in_n_0
@@ -150,16 +254,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [864, 500.0]
+    coordinate: [864, 592.0]
     rotation: 180
     state: enabled
-- name: blocks_multiply_const_vxx_0
+- name: blocks_multiply_const_vxx_1
   id: blocks_multiply_const_vxx
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    const: '0.5'
+    const: '0.15'
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -168,8 +272,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 500.0]
-    rotation: 180
+    coordinate: [304, 736.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_const_vxx_2
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    const: '[10**(lsb_power_db/20) * math.sqrt((135/128) * (1/2) * (1/191))]*1024
+      + [10**(usb_power_db/20) * math.sqrt((135/128) * (1/2) * (1/191))]*1024'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: complex
+    vlen: '2048'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [152.0, 264]
+    rotation: 270
     state: enabled
 - name: blocks_multiply_xx_0
   id: blocks_multiply_xx
@@ -186,7 +309,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [728, 488.0]
+    coordinate: [728, 584.0]
     rotation: 180
     state: enabled
 - name: blocks_repeat_0
@@ -204,8 +327,26 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1016, 348.0]
+    coordinate: [1016, 432.0]
     rotation: 0
+    state: enabled
+- name: blocks_skiphead_0
+  id: blocks_skiphead
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: samp_rate * 2 * 5
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 824.0]
+    rotation: 180
     state: enabled
 - name: blocks_vector_source_x_0
   id: blocks_vector_source_x
@@ -225,7 +366,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [864, 420.0]
+    coordinate: [864, 504.0]
     rotation: 180
     state: enabled
 - name: blocks_vector_to_stream_0
@@ -243,7 +384,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1016, 520.0]
+    coordinate: [1016, 616.0]
     rotation: 180
     state: enabled
 - name: blocks_wavfile_source_0
@@ -261,7 +402,25 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [992, 40.0]
+    coordinate: [992, 120.0]
+    rotation: 180
+    state: enabled
+- name: blocks_wavfile_source_1
+  id: blocks_wavfile_source
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    file: sample_mono.wav
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    nchan: '1'
+    repeat: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1000, 984.0]
     rotation: 180
     state: enabled
 - name: fft_vxx_0
@@ -282,7 +441,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [280, 324.0]
+    coordinate: [280, 408.0]
+    rotation: 0
+    state: enabled
+- name: filename
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: ''
+    short_id: ''
+    type: str
+    value: hd_generated.cu8
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [216, 8.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -295,7 +471,52 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 236]
+    coordinate: [440, 8.0]
+    rotation: 0
+    state: enabled
+- name: low_pass_filter_0
+  id: low_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    cutoff_freq: '110000'
+    decim: '1'
+    gain: '1'
+    interp: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate
+    type: fir_filter_ccf
+    width: '20000'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [168, 952.0]
+    rotation: 180
+    state: enabled
+- name: lsb_power_db
+  id: parameter
+  parameters:
+    alias: ''
+    comment: 'Total power in the lower
+
+      sideband relative to the
+
+      FM carrier (-23 to -13 dB)'
+    hide: none
+    label: ''
+    short_id: ''
+    type: eng_float
+    value: '-13'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 296.0]
     rotation: 0
     state: enabled
 - name: nrsc5_hdc_encoder_0
@@ -312,7 +533,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [808, 40.0]
+    coordinate: [808, 120.0]
     rotation: 180
     state: enabled
 - name: nrsc5_l1_fm_encoder_mp1_0
@@ -327,7 +548,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [280, 120.0]
+    coordinate: [280, 200.0]
     rotation: 180
     state: enabled
 - name: nrsc5_l2_encoder_0
@@ -335,6 +556,8 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
+    blend_control: nrsc5.blend.ENABLE
+    ccc_width: '24'
     comment: ''
     data_bytes: '2000'
     first_prog: '0'
@@ -346,7 +569,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [592, 56.0]
+    coordinate: [592, 128.0]
     rotation: 180
     state: enabled
 - name: nrsc5_lot_encoder_0
@@ -364,7 +587,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 292.0]
+    coordinate: [568, 376.0]
     rotation: 0
     state: true
 - name: nrsc5_psd_encoder_0
@@ -373,7 +596,7 @@ blocks:
     affinity: ''
     alias: ''
     artist: Artist
-    bytes_per_frame: '0'
+    bytes_per_frame: '128'
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -383,7 +606,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [864, 140.0]
+    coordinate: [864, 216.0]
     rotation: 180
     state: enabled
 - name: nrsc5_sis_encoder_0
@@ -394,6 +617,7 @@ blocks:
     altitude: '93.0'
     comment: ''
     country_code: US
+    emergency_alerts: 'False'
     fcc_facility_id: '0'
     latitude: '40.6892'
     longitude: '-74.0445'
@@ -402,23 +626,51 @@ blocks:
     minoutbuf: '0'
     mode: nrsc5.pids_mode.FM
     num_programs: '1'
-    program0: nrsc5.program_type.NEWS
-    program1: nrsc5.program_type.NEWS
-    program2: nrsc5.program_type.NEWS
-    program3: nrsc5.program_type.NEWS
-    program4: nrsc5.program_type.NEWS
-    program5: nrsc5.program_type.NEWS
-    program6: nrsc5.program_type.NEWS
-    program7: nrsc5.program_type.NEWS
+    program_name0: HD1
+    program_name1: HD2
+    program_name2: HD3
+    program_name3: HD4
+    program_name4: HD5
+    program_name5: HD6
+    program_name6: HD7
+    program_name7: HD8
+    program_type0: nrsc5.program_type.NEWS
+    program_type1: nrsc5.program_type.NEWS
+    program_type2: nrsc5.program_type.NEWS
+    program_type3: nrsc5.program_type.NEWS
+    program_type4: nrsc5.program_type.NEWS
+    program_type5: nrsc5.program_type.NEWS
+    program_type6: nrsc5.program_type.NEWS
+    program_type7: nrsc5.program_type.NEWS
     short_name: ABCD-FM
     slogan: This is ABCD-FM
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [568, 180.0]
+    coordinate: [568, 256.0]
     rotation: 0
     state: true
+- name: rational_resampler_xxx_0_0
+  id: rational_resampler_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    decim: '16'
+    fbw: '0'
+    interp: '135'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    taps: ''
+    type: ccc
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [376, 968.0]
+    rotation: 180
+    state: enabled
 - name: rational_resampler_xxx_1
   id: rational_resampler_xxx
   parameters:
@@ -436,28 +688,93 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [344, 476.0]
+    coordinate: [352, 568.0]
     rotation: 180
+    state: enabled
+- name: seconds
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: ''
+    short_id: ''
+    type: intx
+    value: '60'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [360, 8.0]
+    rotation: 0
+    state: enabled
+- name: snr_db
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: ''
+    short_id: ''
+    type: eng_float
+    value: '20'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 184.0]
+    rotation: 0
+    state: enabled
+- name: usb_power_db
+  id: parameter
+  parameters:
+    alias: ''
+    comment: 'Total power in the upper
+
+      sideband relative to the
+
+      FM carrier (-23 to -13 dB)'
+    hide: none
+    label: ''
+    short_id: ''
+    type: eng_float
+    value: '-13'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 440.0]
+    rotation: 0
     state: enabled
 
 connections:
-- [blocks_add_const_vxx_0_0, '0', blocks_float_to_uchar_0, '0']
+- [analog_noise_source_x_0, '0', blocks_add_xx_0, '1']
+- [analog_wfm_tx_0_0, '0', rational_resampler_xxx_0_0, '0']
+- [blocks_add_xx_0, '0', blocks_multiply_const_vxx_1, '0']
 - [blocks_complex_to_float_0, '0', blocks_interleave_0, '0']
 - [blocks_complex_to_float_0, '1', blocks_interleave_0, '1']
 - [blocks_conjugate_cc_0, '0', rational_resampler_xxx_1, '0']
-- [blocks_float_to_uchar_0, '0', blocks_file_sink_0, '0']
-- [blocks_interleave_0, '0', blocks_add_const_vxx_0_0, '0']
+- [blocks_delay_0, '0', analog_wfm_tx_0_0, '0']
+- [blocks_float_to_uchar_0, '0', blocks_skiphead_0, '0']
+- [blocks_head_0, '0', blocks_file_sink_0, '0']
+- [blocks_interleave_0, '0', blocks_float_to_uchar_0, '0']
 - [blocks_keep_m_in_n_0, '0', blocks_multiply_xx_0, '1']
-- [blocks_multiply_const_vxx_0, '0', blocks_complex_to_float_0, '0']
+- [blocks_multiply_const_vxx_1, '0', blocks_complex_to_float_0, '0']
+- [blocks_multiply_const_vxx_2, '0', fft_vxx_0, '0']
 - [blocks_multiply_xx_0, '0', blocks_conjugate_cc_0, '0']
 - [blocks_repeat_0, '0', blocks_vector_to_stream_0, '0']
+- [blocks_skiphead_0, '0', blocks_head_0, '0']
 - [blocks_vector_source_x_0, '0', blocks_multiply_xx_0, '0']
 - [blocks_vector_to_stream_0, '0', blocks_keep_m_in_n_0, '0']
 - [blocks_wavfile_source_0, '0', nrsc5_hdc_encoder_0, '0']
 - [blocks_wavfile_source_0, '1', nrsc5_hdc_encoder_0, '1']
+- [blocks_wavfile_source_1, '0', blocks_delay_0, '0']
 - [fft_vxx_0, '0', blocks_repeat_0, '0']
+- [low_pass_filter_0, '0', blocks_add_xx_0, '2']
 - [nrsc5_hdc_encoder_0, '0', nrsc5_l2_encoder_0, '0']
-- [nrsc5_l1_fm_encoder_mp1_0, '0', fft_vxx_0, '0']
+- [nrsc5_l1_fm_encoder_mp1_0, '0', blocks_multiply_const_vxx_2, '0']
+- [nrsc5_l1_fm_encoder_mp1_0, clock, nrsc5_psd_encoder_0, clock]
+- [nrsc5_l1_fm_encoder_mp1_0, clock, nrsc5_sis_encoder_0, clock]
 - [nrsc5_l2_encoder_0, '0', nrsc5_l1_fm_encoder_mp1_0, '0']
 - [nrsc5_l2_encoder_0, ready, nrsc5_lot_encoder_0, ready]
 - [nrsc5_l2_encoder_0, ready, nrsc5_sis_encoder_0, ready]
@@ -465,8 +782,9 @@ connections:
 - [nrsc5_psd_encoder_0, '0', nrsc5_l2_encoder_0, '1']
 - [nrsc5_sis_encoder_0, '0', nrsc5_l1_fm_encoder_mp1_0, '1']
 - [nrsc5_sis_encoder_0, aas, nrsc5_l2_encoder_0, aas]
-- [rational_resampler_xxx_1, '0', blocks_multiply_const_vxx_0, '0']
+- [rational_resampler_xxx_0_0, '0', low_pass_filter_0, '0']
+- [rational_resampler_xxx_1, '0', blocks_add_xx_0, '0']
 
 metadata:
   file_format: 1
-  grc_version: 3.10.7.0
+  grc_version: 3.10.12.0

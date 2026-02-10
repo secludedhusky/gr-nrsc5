@@ -32,7 +32,11 @@ public:
      * class. nrsc5::l1_am_encoder::make is the public interface for
      * creating new instances.
      */
-    static sptr make(const int sm);
+    static sptr make(const int sm,
+                     const int rdb = 0,
+                     const int hpp = 0,
+                     const int pl = 0,
+                     const int aab = 0);
 };
 
 } // namespace nrsc5

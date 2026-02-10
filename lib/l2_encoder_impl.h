@@ -53,6 +53,10 @@ constexpr unsigned char BBM[] = { 0x7d, 0x3a, 0xe2, 0x42 };
 constexpr int MAX_PROGRAMS = 8;
 constexpr uint8_t AAS_PACKET_FORMAT = 0x21;
 constexpr uint16_t SIG_PORT = 0x20;
+constexpr int RS_CODEWORD_LEN = 96;
+constexpr int RS_PARITY_LEN = 8;
+constexpr int CONTROL_WORD_LEN = 6;
+constexpr int HEF_LEN = 3;
 
 class l2_encoder_impl : public l2_encoder
 {
@@ -62,6 +66,7 @@ private:
     int program_type[MAX_PROGRAMS];
     int size;
     int data_bytes;
+    blend blend_control;
     int payload_bytes;
     unsigned char rs_buf[255];
     void* rs_enc;
@@ -112,7 +117,9 @@ public:
     l2_encoder_impl(const int num_progs,
                     const int first_prog,
                     const int size,
-                    const int data_bytes = 0);
+                    const int data_bytes = 0,
+                    const blend blend_control = blend::ENABLE,
+                    const int ccc_width = 24);
     ~l2_encoder_impl();
 
     // Where all the action really happens

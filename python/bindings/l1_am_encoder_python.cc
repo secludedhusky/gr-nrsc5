@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(l1_am_encoder.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(abd9b28201d6b1e13eaa2ebe1d06646c)                     */
+/* BINDTOOL_HEADER_FILE_HASH(96b80cbeab3f9da9b4a52abeeb3986fb)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -38,6 +38,10 @@ void bind_l1_am_encoder(py::module& m)
 
         .def(py::init(&l1_am_encoder::make),
            py::arg("sm"),
+           py::arg("rdb") = 0,
+           py::arg("hpp") = 0,
+           py::arg("pl") = 0,
+           py::arg("aab") = 0,
            D(l1_am_encoder,make)
         )
 

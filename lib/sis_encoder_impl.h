@@ -32,7 +32,7 @@ enum class msg_id {
     SERVICE_INFORMATION_MESSAGE,
     SIS_PARAMETER_MESSAGE,
     UNIVERSAL_SHORT_STATION_NAME,
-    ACTIVE_RADIO_MESSAGE,
+    EMERGENCY_ALERTS_MESSAGE,
     ADVANCED_SERVICE_INFORMATION_MESSAGE
 };
 
@@ -68,6 +68,25 @@ std::vector<std::vector<sched_item>> schedule_fm_short_no_ea = {
     { sched_item::SERVICE_INFO_MESSAGE, sched_item::SERVICE_INFO_MESSAGE }
 };
 
+std::vector<std::vector<sched_item>> schedule_fm_short_ea = {
+    { sched_item::SHORT_STATION_NAME, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::STATION_LOCATION, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SIS_PARAMETER_MESSAGE, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SERVICE_INFO_MESSAGE, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SHORT_STATION_NAME, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SHORT_STATION_NAME, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE }
+};
+
 std::vector<std::vector<sched_item>> schedule_fm_long_no_ea = {
     { sched_item::UNIVERSAL_SHORT_STATION_NAME },
     { sched_item::SERVICE_INFO_MESSAGE, sched_item::SERVICE_INFO_MESSAGE },
@@ -87,6 +106,25 @@ std::vector<std::vector<sched_item>> schedule_fm_long_no_ea = {
     { sched_item::SIS_PARAMETER_MESSAGE, sched_item::STATION_ID }
 };
 
+std::vector<std::vector<sched_item>> schedule_fm_long_ea = {
+    { sched_item::UNIVERSAL_SHORT_STATION_NAME },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::STATION_LOCATION, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SIS_PARAMETER_MESSAGE, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SERVICE_INFO_MESSAGE, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SIS_PARAMETER_MESSAGE, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SERVICE_INFO_MESSAGE, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE }
+};
+
 std::vector<std::vector<sched_item>> schedule_am_short_no_ea = {
     { sched_item::SHORT_STATION_NAME, sched_item::STATION_ID },
     { sched_item::STATION_MESSAGE },
@@ -98,6 +136,17 @@ std::vector<std::vector<sched_item>> schedule_am_short_no_ea = {
     { sched_item::LONG_STATION_NAME }
 };
 
+std::vector<std::vector<sched_item>> schedule_am_short_ea = {
+    { sched_item::SHORT_STATION_NAME, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::STATION_LOCATION, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SIS_PARAMETER_MESSAGE, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE }
+};
+
 std::vector<std::vector<sched_item>> schedule_am_long_no_ea = {
     { sched_item::UNIVERSAL_SHORT_STATION_NAME },
     { sched_item::STATION_MESSAGE },
@@ -107,6 +156,17 @@ std::vector<std::vector<sched_item>> schedule_am_long_no_ea = {
     { sched_item::STATION_SLOGAN },
     { sched_item::SIS_PARAMETER_MESSAGE, sched_item::STATION_ID },
     { sched_item::SERVICE_INFO_MESSAGE, sched_item::SERVICE_INFO_MESSAGE }
+};
+
+std::vector<std::vector<sched_item>> schedule_am_long_ea = {
+    { sched_item::UNIVERSAL_SHORT_STATION_NAME },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::STATION_LOCATION, sched_item::SERVICE_INFO_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::EA_MESSAGE },
+    { sched_item::SIS_PARAMETER_MESSAGE, sched_item::STATION_ID },
+    { sched_item::EA_MESSAGE }
 };
 
 enum class name_type { UNIVERSAL_SHORT_STATION_NAME, SLOGAN };
@@ -165,27 +225,6 @@ enum class sig_tag {
     SERVICE_NAME = 0x69
 };
 
-enum class service_data_type {
-    NON_SPECIFIC = 0,
-    NEWS = 1,
-    SPORTS = 3,
-    WEATHER = 29,
-    EMERGENCY = 31,
-    TRAFFIC = 65,
-    IMAGE_MAPS = 66,
-    TEXT = 80,
-    ADVERTISING = 256,
-    FINANCIAL = 257,
-    STOCK_TICKER = 258,
-    NAVIGATION = 259,
-    ELECTRONIC_PROGRAM_GUIDE = 260,
-    AUDIO = 261,
-    PRIVATE_DATA_NETWORK = 262,
-    SERVICE_MAINTENANCE = 263,
-    HD_RADIO_SYSTEM_SERVICES = 264,
-    AUDIO_RELATED_DATA = 265
-};
-
 enum class data_type { STREAM = 0, PACKET = 1, LOT = 3 };
 
 constexpr uint8_t AAS_PACKET_FORMAT = 0x21;
@@ -196,14 +235,18 @@ class sis_encoder_impl : public sis_encoder
 private:
     pids_mode mode;
     int blocks_per_frame;
-    std::vector<std::vector<sched_item>>* schedule;
+    int blocks_allowed;
     unsigned int alfn;
     std::string country_code;
     unsigned int fcc_facility_id;
     std::string short_name;
     bool fm_suffix;
+    bool use_standard_short_station_name;
     std::string slogan;
     std::string message;
+    std::string emergency_alert;
+    unsigned int emergency_alert_cnt_len;
+    std::ostringstream command_buffer;
     float latitude;
     float longitude;
     float altitude;
@@ -237,8 +280,14 @@ private:
     unsigned int message_current_frame;
     unsigned int message_seq;
 
+    unsigned int emergency_alert_current_frame;
+    unsigned int emergency_alert_seq;
+
+    std::vector<std::string> program_names;
     std::vector<program_type> program_types;
-    unsigned int current_program;
+    std::vector<service_data_type> data_types;
+    std::vector<unsigned int> data_mime_types;
+    unsigned int current_service;
 
     unsigned int current_parameter;
 
@@ -247,6 +296,8 @@ private:
     uint16_t d_seq;
 
     int crc12(unsigned char* sis);
+    int crc7(const std::string alert);
+    void update_control_data_crc(std::string& control_data);
     void write_bit(int b);
     void write_int(int n, int len);
     void write_char5(char c);
@@ -259,6 +310,8 @@ private:
     void write_sis_parameter_message();
     void write_universal_short_station_name();
     void write_station_slogan();
+    void write_emergency_alert();
+    bool can_use_standard_short_station_name();
     std::string generate_sig();
     std::string generate_sig_service(sig_service_type type,
                                      unsigned int number,
@@ -274,7 +327,9 @@ private:
                                             mime_hash mime,
                                             unsigned int vendor_id);
     std::string generate_aas_header(uint16_t port, uint16_t seq);
+    void handle_clock(pmt::pmt_t msg);
     void handle_notify(pmt::pmt_t msg);
+    void handle_command(pmt::pmt_t msg);
     void send_sig();
 
 public:
@@ -283,7 +338,10 @@ public:
         const std::string& short_name = "ABCD",
         const std::string& slogan = "",
         const std::string& message = "",
+        const std::vector<std::string> program_names = { "HD1" },
         const std::vector<program_type> program_types = { program_type::UNDEFINED },
+        const std::vector<service_data_type> data_types = {},
+        const std::vector<unsigned int> data_mime_types = {},
         const float latitude = 40.6892,
         const float longitude = -74.0445,
         const float altitude = 93.0,

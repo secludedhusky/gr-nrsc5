@@ -59,7 +59,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 512.0]
+    coordinate: [848, 720.0]
     rotation: 0
     state: true
 - name: blocks_add_const_vxx_0
@@ -68,7 +68,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    const: '0.5'
+    const: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
     type: float
@@ -77,7 +77,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [568, 652.0]
+    coordinate: [560, 848.0]
     rotation: 180
     state: true
 - name: blocks_add_xx_0
@@ -95,7 +95,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 512.0]
+    coordinate: [384, 720.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_float_0
@@ -111,7 +111,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [640, 512.0]
+    coordinate: [664, 720.0]
     rotation: 0
     state: true
 - name: blocks_delay_0
@@ -131,7 +131,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 652.0]
+    coordinate: [912, 848.0]
     rotation: 180
     state: true
 - name: blocks_float_to_complex_0
@@ -147,35 +147,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 656.0]
+    coordinate: [376, 856.0]
     rotation: 180
     state: true
-- name: blocks_keep_m_in_n_0
-  id: blocks_keep_m_in_n
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    m: '270'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    n: '512'
-    offset: '121'
-    type: complex
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [720, 420.0]
-    rotation: 180
-    state: enabled
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    const: '0.7'
+    const: '0.4'
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -184,103 +165,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 524.0]
+    coordinate: [488, 728.0]
     rotation: 0
     state: true
-- name: blocks_multiply_xx_0
-  id: blocks_multiply_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [592, 408.0]
-    rotation: 180
-    state: enabled
-- name: blocks_null_source_0
-  id: blocks_null_source
-  parameters:
-    affinity: ''
-    alias: ''
-    bus_structure_source: '[[0,],]'
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_outputs: '1'
-    type: byte
-    vlen: '24000'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [536, 148.0]
-    rotation: 180
-    state: enabled
-- name: blocks_repeat_0
-  id: blocks_repeat
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    interp: '2'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: complex
-    vlen: '256'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [896, 284.0]
-    rotation: 0
-    state: enabled
-- name: blocks_vector_source_x_0
-  id: blocks_vector_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    repeat: 'True'
-    tags: '[]'
-    type: complex
-    vector: '[math.sin(math.pi / 2 * i / 14) for i in range(14)] + [1] * (256-14)
-      + [math.cos(math.pi / 2 * i / 14) for i in range(14)]'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [720, 340.0]
-    rotation: 180
-    state: enabled
-- name: blocks_vector_to_stream_0
-  id: blocks_vector_to_stream
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_items: '256'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [880, 440.0]
-    rotation: 180
-    state: enabled
 - name: blocks_wavfile_source_0
   id: blocks_wavfile_source
   parameters:
@@ -296,8 +183,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [904, 28.0]
-    rotation: 180
+    coordinate: [264, 160.0]
+    rotation: 0
     state: enabled
 - name: blocks_wavfile_source_1
   id: blocks_wavfile_source
@@ -314,7 +201,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1072, 644.0]
+    coordinate: [1064, 840.0]
     rotation: 180
     state: true
 - name: fft_vxx_0
@@ -335,8 +222,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [288, 260.0]
-    rotation: 0
+    coordinate: [1016, 520.0]
+    rotation: 180
     state: enabled
 - name: import_0
   id: import
@@ -360,7 +247,7 @@ blocks:
     comment: ''
     cutoff_freq: '4500'
     decim: '1'
-    gain: '0.5'
+    gain: '1'
     interp: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -372,7 +259,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [728, 604.0]
+    coordinate: [720, 808.0]
+    rotation: 180
+    state: true
+- name: network_socket_pdu_0_0
+  id: network_socket_pdu
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    host: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mtu: '10000'
+    port: '52000'
+    tcp_no_delay: 'False'
+    type: TCP_SERVER
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1120, 32.0]
     rotation: 180
     state: true
 - name: network_socket_pdu_1
@@ -392,9 +299,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1008, 116.0]
-    rotation: 180
+    coordinate: [280, 328.0]
+    rotation: 0
     state: true
+- name: nrsc5_am_pulse_shaper_0
+  id: nrsc5_am_pulse_shaper
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [832, 560.0]
+    rotation: 180
+    state: enabled
 - name: nrsc5_hdc_encoder_0
   id: nrsc5_hdc_encoder
   parameters:
@@ -409,31 +331,37 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [736, 28.0]
-    rotation: 180
+    coordinate: [464, 160.0]
+    rotation: 0
     state: enabled
 - name: nrsc5_l1_am_encoder_ma1_0
   id: nrsc5_l1_am_encoder_ma1
   parameters:
+    aab: '0'
     affinity: ''
     alias: ''
     comment: ''
+    hpp: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
+    pl: '0'
+    rdb: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [288, 120.0]
-    rotation: 180
+    coordinate: [1008, 216.0]
+    rotation: 0
     state: enabled
 - name: nrsc5_l2_encoder_0
   id: nrsc5_l2_encoder
   parameters:
     affinity: ''
     alias: ''
+    blend_control: nrsc5.blend.ENABLE
+    ccc_width: '1'
     comment: ''
-    data_bytes: '0'
+    data_bytes: '4'
     first_prog: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -443,9 +371,48 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [536, 40.0]
-    rotation: 180
+    coordinate: [736, 192.0]
+    rotation: 0
     state: enabled
+- name: nrsc5_l2_encoder_1
+  id: nrsc5_l2_encoder
+  parameters:
+    affinity: ''
+    alias: ''
+    blend_control: nrsc5.blend.ENABLE
+    ccc_width: '24'
+    comment: ''
+    data_bytes: '2048'
+    first_prog: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_progs: '0'
+    size: '24000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 336.0]
+    rotation: 0
+    state: enabled
+- name: nrsc5_lot_encoder_0
+  id: nrsc5_lot_encoder
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    filename: SLABCD$$010000.png
+    lot_id: '42'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    port: '0x1001'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [720, 424.0]
+    rotation: 180
+    state: true
 - name: nrsc5_psd_encoder_0
   id: nrsc5_psd_encoder
   parameters:
@@ -462,8 +429,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [736, 100.0]
-    rotation: 180
+    coordinate: [520, 312.0]
+    rotation: 0
     state: enabled
 - name: nrsc5_sis_encoder_0
   id: nrsc5_sis_encoder
@@ -473,6 +440,7 @@ blocks:
     altitude: '93.0'
     comment: ''
     country_code: US
+    emergency_alerts: 'False'
     fcc_facility_id: '0'
     latitude: '40.6892'
     longitude: '-74.0445'
@@ -481,21 +449,29 @@ blocks:
     minoutbuf: '0'
     mode: nrsc5.pids_mode.AM
     num_programs: '1'
-    program0: nrsc5.program_type.NEWS
-    program1: nrsc5.program_type.NEWS
-    program2: nrsc5.program_type.NEWS
-    program3: nrsc5.program_type.NEWS
-    program4: nrsc5.program_type.NEWS
-    program5: nrsc5.program_type.NEWS
-    program6: nrsc5.program_type.NEWS
-    program7: nrsc5.program_type.NEWS
+    program_name0: HD1
+    program_name1: HD2
+    program_name2: HD3
+    program_name3: HD4
+    program_name4: HD5
+    program_name5: HD6
+    program_name6: HD7
+    program_name7: HD8
+    program_type0: nrsc5.program_type.NEWS
+    program_type1: nrsc5.program_type.NEWS
+    program_type2: nrsc5.program_type.NEWS
+    program_type3: nrsc5.program_type.NEWS
+    program_type4: nrsc5.program_type.NEWS
+    program_type5: nrsc5.program_type.NEWS
+    program_type6: nrsc5.program_type.NEWS
+    program_type7: nrsc5.program_type.NEWS
     short_name: ABCD
     slogan: This is ABCD-AM
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [536, 196.0]
+    coordinate: [736, 32.0]
     rotation: 180
     state: true
 - name: rational_resampler_xxx_1
@@ -515,7 +491,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 396.0]
+    coordinate: [392, 600.0]
     rotation: 180
     state: enabled
 
@@ -526,26 +502,28 @@ connections:
 - [blocks_complex_to_float_0, '1', audio_sink_0, '1']
 - [blocks_delay_0, '0', low_pass_filter_1, '0']
 - [blocks_float_to_complex_0, '0', blocks_add_xx_0, '1']
-- [blocks_keep_m_in_n_0, '0', blocks_multiply_xx_0, '1']
 - [blocks_multiply_const_vxx_0, '0', blocks_complex_to_float_0, '0']
-- [blocks_multiply_xx_0, '0', rational_resampler_xxx_1, '0']
-- [blocks_null_source_0, '0', nrsc5_l1_am_encoder_ma1_0, '1']
-- [blocks_repeat_0, '0', blocks_vector_to_stream_0, '0']
-- [blocks_vector_source_x_0, '0', blocks_multiply_xx_0, '0']
-- [blocks_vector_to_stream_0, '0', blocks_keep_m_in_n_0, '0']
 - [blocks_wavfile_source_0, '0', nrsc5_hdc_encoder_0, '0']
 - [blocks_wavfile_source_1, '0', blocks_delay_0, '0']
-- [fft_vxx_0, '0', blocks_repeat_0, '0']
+- [fft_vxx_0, '0', nrsc5_am_pulse_shaper_0, '0']
 - [low_pass_filter_1, '0', blocks_add_const_vxx_0, '0']
+- [network_socket_pdu_0_0, pdus, nrsc5_sis_encoder_0, command]
 - [network_socket_pdu_1, pdus, nrsc5_psd_encoder_0, set_meta]
+- [nrsc5_am_pulse_shaper_0, '0', rational_resampler_xxx_1, '0']
 - [nrsc5_hdc_encoder_0, '0', nrsc5_l2_encoder_0, '0']
 - [nrsc5_l1_am_encoder_ma1_0, '0', fft_vxx_0, '0']
 - [nrsc5_l1_am_encoder_ma1_0, clock, nrsc5_psd_encoder_0, clock]
-- [nrsc5_l2_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '0']
+- [nrsc5_l1_am_encoder_ma1_0, clock, nrsc5_sis_encoder_0, clock]
+- [nrsc5_l2_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '1']
+- [nrsc5_l2_encoder_0, ready, nrsc5_sis_encoder_0, ready]
+- [nrsc5_l2_encoder_1, '0', nrsc5_l1_am_encoder_ma1_0, '2']
+- [nrsc5_l2_encoder_1, ready, nrsc5_lot_encoder_0, ready]
+- [nrsc5_lot_encoder_0, aas, nrsc5_l2_encoder_1, aas]
 - [nrsc5_psd_encoder_0, '0', nrsc5_l2_encoder_0, '1']
-- [nrsc5_sis_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '2']
+- [nrsc5_sis_encoder_0, '0', nrsc5_l1_am_encoder_ma1_0, '0']
+- [nrsc5_sis_encoder_0, aas, nrsc5_l2_encoder_0, aas]
 - [rational_resampler_xxx_1, '0', blocks_add_xx_0, '0']
 
 metadata:
   file_format: 1
-  grc_version: 3.10.7.0
+  grc_version: 3.10.12.0

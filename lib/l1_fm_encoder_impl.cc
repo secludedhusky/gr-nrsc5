@@ -15,7 +15,7 @@
 namespace gr {
 namespace nrsc5 {
 
-std::vector<int> get_in_sizeofs(const int psm, const int ssm)
+std::vector<int> get_in_sizeofs_fm(const int psm, const int ssm)
 {
     std::vector<int> in_sizeofs;
 
@@ -67,7 +67,7 @@ l1_fm_encoder::sptr l1_fm_encoder::make(const int psm, const int ssm)
  */
 l1_fm_encoder_impl::l1_fm_encoder_impl(const int psm, const int ssm)
     : gr::block("l1_fm_encoder",
-                gr::io_signature::makev(2, 9, get_in_sizeofs(psm, ssm)),
+                gr::io_signature::makev(2, 9, get_in_sizeofs_fm(psm, ssm)),
                 gr::io_signature::make(1, 1, sizeof(gr_complex) * FM_FFT_SIZE))
 {
     set_output_multiple(FM_SYMBOLS_PER_FRAME);
@@ -543,14 +543,14 @@ void l1_fm_encoder_impl::primary_sc_data_seq(
     out[5] = 1; // sync
     out[6] = 0; // sync
 
-    out[7] = 0;      // reserved
+    out[7] = sci;
     out[8] = out[7]; // parity
 
     out[9] = 1; // sync
 
     out[10] = (scid & 0x2) >> 1;
     out[11] = (scid & 0x1);
-    out[12] = sci;
+    out[12] = 0;                           // ASM1
     out[13] = out[10] ^ out[11] ^ out[12]; // parity
 
     out[14] = 0; // sync
@@ -565,7 +565,7 @@ void l1_fm_encoder_impl::primary_sc_data_seq(
     out[21] = 1; // sync
     out[22] = 1; // sync
 
-    out[23] = 1; // P3ISI
+    out[23] = 1; // ASM0
     out[24] = 0; // reserved
     out[25] = (psmi & 0x20) >> 5;
     out[26] = (psmi & 0x10) >> 4;
@@ -618,8 +618,8 @@ void l1_fm_encoder_impl::secondary_sc_data_seq(unsigned char* out,
     out[23] = 0; // reserved
     out[24] = 0; // reserved
     out[25] = 0; // reserved
-    out[26] = (ssmi & 0x10) >> 4;
-    out[27] = (ssmi & 0x08) >> 3;
+    out[26] = 0; // reserved
+    out[27] = 0; // reserved
     out[28] = (ssmi & 0x04) >> 2;
     out[29] = (ssmi & 0x02) >> 1;
     out[30] = (ssmi & 0x01);

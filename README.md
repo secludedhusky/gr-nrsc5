@@ -22,11 +22,6 @@ Otherwise, run the following commands:
     sudo make install
     sudo ldconfig
 
-If your GNU Radio is installed in `/usr` (rather than `/usr/local`), then
-replace the cmake line above with:
-
-    cmake -DCMAKE_INSTALL_PREFIX=/usr ..
-
 ## Blocks:
 
 ### HDC encoder
@@ -48,7 +43,7 @@ To dynamically update title, artist, and XHDR data, connect a Socket PDU (TCP Se
 
 ### SIS & SIG encoder
 
-This block encodes Station Information Service PDUs, as described in https://www.nrscstandards.org/standards-and-guidelines/documents/standards/nrsc-5-d/reference-docs/1020s.pdf, and assembles them into the PIDS and SIDS logical channels. SIS provides information about the station. All message types are implemented, except for Emergency Alerts.
+This block encodes Station Information Service PDUs, as described in https://www.nrscstandards.org/standards-and-guidelines/documents/standards/nrsc-5-d/reference-docs/1020s.pdf, and assembles them into the PIDS and SIDS logical channels. SIS provides information about the station.
 
 The block can also generate Station Information Guide (SIG) data on its "aas" output, providing the receiver with further information about audio and data services. For each audio program, it indicates that album art and station logo are present. To send SIG data, the "aas" output must be connected to the Layer 2 encoder's "aas" input, and the "ready" output of the Layer 2 encoder must be connected to the "ready" input of the SIS & SIG encoder to tell it when it should produce output.
 
@@ -61,6 +56,34 @@ The SIG data associates the following port numbers with the audio programs:
 * Port 0x1004: Album art for HD3 (audio program 2)
 * Port 0x1005: Station logo for HD3 (audio program 2)
 * etc.
+
+This block can also send emergency alerts. To enable this feature, connect a Socket PDU (TCP Server) block to the "command" input. To send an alert, connect to the TCP port and send the following command, followed by a carriage return:
+
+```
+set_alert|<control_data>|<alert text>
+```
+
+Control data is written in hexidecimal. For instance:
+
+```
+set_alert|00679c247c5b0438c70000|Example alert
+```
+
+To stop sending an alert, send the following command:
+
+```
+clear_alert
+```
+
+The `apps/send_alert.py` script can be used to generate control data and send a `set_alert` command to the TCP port. For example:
+
+```
+./send_alert.py 3 "Example alert" --same 51000
+```
+
+To indicate that the station provides emergency alerts, set the "Emergency alerts" parameter of the SIS & SIG encoder to "On".
+
+The "clock" output of the Layer 1 encoder must be connected to the "clock" input of the SIS & SIG encoder. This connection is used to control latency.
 
 ### LOT encoder
 

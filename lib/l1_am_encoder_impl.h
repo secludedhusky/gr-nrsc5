@@ -82,6 +82,10 @@ class l1_am_encoder_impl : public l1_am_encoder
 {
 private:
     int sm;
+    int rdb;
+    int hpp;
+    int pl;
+    int aab;
     int p1_bits, p1_mod;
     int p3_bits, p3_mod;
 
@@ -115,11 +119,12 @@ private:
                           unsigned char matrix[2][AM_SYMBOLS_PER_FRAME],
                           int block);
     void sc_data_seq(
-        unsigned char* out, int pli, int hppi, int abbi, int rdbi, int bc, int smi);
+        unsigned char* out, int pli, int hppi, int aabi, int rdbi, int bc, int smi);
     void set_channel_power();
 
 public:
-    l1_am_encoder_impl(const int sm);
+    l1_am_encoder_impl(
+        const int sm, const int rdb, const int hpp, const int pl, const int aab);
     ~l1_am_encoder_impl();
 
     // Where all the action really happens
