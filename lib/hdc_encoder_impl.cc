@@ -50,7 +50,7 @@ hdc_encoder_impl::hdc_encoder_impl(int channels, int bitrate)
     if (aacEncOpen(&handle, 0, channels) != AACENC_OK) {
         throw std::runtime_error("hdc_encoder: Unable to open decoder");
     }
-    if (aacEncoder_SetParam(handle, AACENC_AOT, AOT_HDC) != AACENC_OK) {
+    if (aacEncoder_SetParam(handle, AACENC_AOT, 127) != AACENC_OK) {
         throw std::runtime_error("hdc_encoder: Unable to set the AOT");
     }
     if (aacEncoder_SetParam(handle, AACENC_SAMPLERATE, HDC_SAMPLE_RATE) != AACENC_OK) {

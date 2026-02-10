@@ -31,6 +31,9 @@ public:
      * constructor is in a private implementation
      * class. nrsc5::hdc_encoder::make is the public interface for
      * creating new instances.
+     *
+     * \param channels Number of audio channels (1 or 2)
+     * \param bitrate Bitrate in bits per second
      */
     static sptr make(int channels = 2, int bitrate = 64000);
 };

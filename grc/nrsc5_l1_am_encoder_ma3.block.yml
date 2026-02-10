@@ -2,26 +2,7 @@ id: nrsc5_l1_am_encoder_ma3
 label: 'Layer 1 AM encoder: MA3'
 category: '[NRSC-5]'
 
-parameters:
--   id: rdb
-    label: Reduced digital bandwidth
-    dtype: int
-    default: '0'
-    options: ['0', '1']
-    option_labels: ['No', 'Yes']
--   id: hpp
-    label: High-power PIDS
-    dtype: int
-    default: '0'
-    options: ['0', '1']
-    option_labels: ['No', 'Yes']
-    hide: ${'all' if rdb else 'none'}
-
 inputs:
--   label: pids
-    domain: stream
-    dtype: byte
-    vlen: 80
 -   label: p1
     domain: stream
     dtype: byte
@@ -30,7 +11,10 @@ inputs:
     domain: stream
     dtype: byte
     vlen: 30000
-    hide: ${rdb}
+-   label: pids
+    domain: stream
+    dtype: byte
+    vlen: 80
 
 outputs:
 -   domain: stream
@@ -42,6 +26,6 @@ outputs:
 
 templates:
   imports: import nrsc5
-  make: nrsc5.l1_am_encoder(3, rdb=${rdb}, hpp=${hpp})
+  make: nrsc5.l1_am_encoder(3)
 
 file_format: 1

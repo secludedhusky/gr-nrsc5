@@ -13,7 +13,6 @@ parameters:
     label: First prog. no.
     dtype: int
     default: 0
-    hide: ${'none' if num_progs > 0 else 'all'}
 -   id: size
     label: Frame size
     dtype: int
@@ -23,31 +22,31 @@ parameters:
     label: Data bytes
     dtype: int
     default: 0
--   id: ccc_width
-    label: CCC width
-    dtype: int
-    default: 24
-    options: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
-    hide: ${'part' if data_bytes > 0 else 'all'}
 -   id: blend_control
     label: Blend control
     dtype: enum
     options: [nrsc5.blend.DISABLE, nrsc5.blend.SELECT, nrsc5.blend.ENABLE]
     option_labels: ["Disable", "Select", "Enable"]
     default: nrsc5.blend.ENABLE
-    hide: ${ ('none' if num_progs > 0 and first_prog == 0 else 'all') }
+    hide: ${ ('none' if first_prog == 0 else 'all') }
+-   id: tx_digital_gain
+    label: TX Digital Audio Gain (dB)
+    dtype: int
+    default: 0
+-   id: debug_logs
+    label: Debug Logs
+    dtype: bool
+    default: 'False'
 
 inputs:
 -   label: hdc
     domain: stream
     dtype: byte
     multiplicity: ${ num_progs }
-    hide: ${num_progs == 0}
 -   label: psd
     domain: stream
     dtype: byte
     multiplicity: ${ num_progs }
-    hide: ${num_progs == 0}
 -   domain: message
     id: aas
     optional: true
@@ -61,11 +60,12 @@ outputs:
     optional: true
 asserts:
 - ${ 0 <= first_prog <= 7 }
-- ${ 0 <= num_progs <= 8 - first_prog }
-- ${ data_bytes <= (size - 22) // 8 - 1 - ccc_width }
+- ${ 1 <= num_progs <= 8 - first_prog }
+- ${ data_bytes < (size - 22) // 8 }
+- ${ -8 <= tx_digital_gain <= 6 }
 
 templates:
     imports: import nrsc5
-    make: nrsc5.l2_encoder(${num_progs}, ${first_prog}, ${size}, ${data_bytes}, ${blend_control}, ccc_width=${ccc_width})
+    make: nrsc5.l2_encoder(${num_progs}, ${first_prog}, ${size}, ${data_bytes}, ${blend_control}, ${tx_digital_gain}, ${debug_logs})
 
 file_format: 1
