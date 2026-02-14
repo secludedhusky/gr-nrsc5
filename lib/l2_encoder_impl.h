@@ -123,7 +123,8 @@ public:
                     const int data_bytes = 0,
                     const blend blend_control = blend::ENABLE,
                     const int tx_digital_gain = 0,
-                    const bool debug_logs = false);
+                    const bool debug_logs = false,
+                    const int ccc_width = 24);
     ~l2_encoder_impl();
 
     // Where all the action really happens

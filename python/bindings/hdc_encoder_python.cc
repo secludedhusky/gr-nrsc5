@@ -39,6 +39,8 @@ void bind_hdc_encoder(py::module& m)
         .def(py::init(&hdc_encoder::make),
            py::arg("channels") = 2,
            py::arg("bitrate") = 64000,
+           py::arg("use_parametric_stereo") = false,
+           py::arg("tx_digital_gain") = 0,
            D(hdc_encoder,make)
         )
 

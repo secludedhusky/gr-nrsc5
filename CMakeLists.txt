@@ -161,8 +161,8 @@ else()
 
     ExternalProject_Add (
         fdk_aac_external
-        GIT_REPOSITORY "https://github.com/argilo/fdk-aac.git"
-        GIT_TAG hdc-encoder
+        GIT_REPOSITORY "https://github.com/secludedhusky/fdk-aac.git"
+        GIT_TAG edits-parametric
         PREFIX ${FDK_AAC_PREFIX}
 
         BINARY_DIR ${FDK_AAC_PREFIX}/src/fdk_aac_external

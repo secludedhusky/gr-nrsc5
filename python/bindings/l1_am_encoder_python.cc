@@ -38,6 +38,10 @@ void bind_l1_am_encoder(py::module& m)
 
         .def(py::init(&l1_am_encoder::make),
            py::arg("sm"),
+           py::arg("rdb") = 0,
+           py::arg("hpp") = 0,
+           py::arg("pl") = 0,
+           py::arg("aab") = 0,
            D(l1_am_encoder,make)
         )
 

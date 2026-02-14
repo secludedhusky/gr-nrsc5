@@ -49,6 +49,7 @@ void bind_l2_encoder(py::module& m)
            py::arg("blend_control") = ::gr::nrsc5::blend::ENABLE,
            py::arg("tx_digital_gain") = 0,
            py::arg("debug_logs") = false,
+           py::arg("ccc_width") = 24,
            D(l2_encoder,make)
         )
         

@@ -20,38 +20,42 @@ constexpr float qam16_power = 3.979400;
 constexpr float qpsk_power = -3.010300;
 constexpr float bpsk_power = -6.020600;
 
-std::vector<int> get_in_sizeofs(const int sm)
+std::vector<int> get_in_sizeofs_am(const int sm, const int rdb)
 {
     std::vector<int> in_sizeofs;
 
     switch (sm) {
     case 1:
-        in_sizeofs.push_back(3750);
-        in_sizeofs.push_back(24000);
         in_sizeofs.push_back(SIS_BITS);
+        in_sizeofs.push_back(3750);
+        if (!rdb)
+            in_sizeofs.push_back(24000);
         break;
     case 3:
-        in_sizeofs.push_back(3750);
-        in_sizeofs.push_back(30000);
         in_sizeofs.push_back(SIS_BITS);
+        in_sizeofs.push_back(3750);
+        if (!rdb)
+            in_sizeofs.push_back(30000);
         break;
     }
 
     return in_sizeofs;
 }
 
-l1_am_encoder::sptr l1_am_encoder::make(const int sm)
+l1_am_encoder::sptr l1_am_encoder::make(
+    const int sm, const int rdb, const int hpp, const int pl, const int aab)
 {
-    return gnuradio::get_initial_sptr(new l1_am_encoder_impl(sm));
+    return gnuradio::get_initial_sptr(new l1_am_encoder_impl(sm, rdb, hpp, pl, aab));
 }
 
 
 /*
  * The private constructor
  */
-l1_am_encoder_impl::l1_am_encoder_impl(const int sm)
+l1_am_encoder_impl::l1_am_encoder_impl(
+    const int sm, const int rdb, const int hpp, const int pl, const int aab)
     : gr::block("l1_am_encoder",
-                gr::io_signature::makev(3, 3, get_in_sizeofs(sm)),
+                gr::io_signature::makev(2, 3, get_in_sizeofs_am(sm, rdb)),
                 gr::io_signature::make(1, 1, sizeof(gr_complex) * AM_FFT_SIZE))
 {
     set_output_multiple(AM_SYMBOLS_PER_FRAME);
@@ -60,6 +64,10 @@ l1_am_encoder_impl::l1_am_encoder_impl(const int sm)
     message_port_register_out(pmt::intern("clock"));
 
     this->sm = sm;
+    this->rdb = rdb;
+    this->hpp = hpp;
+    this->pl = pl;
+    this->aab = aab;
 
     p1_bits = 3750;
     p1_mod = 8;
@@ -84,8 +92,13 @@ l1_am_encoder_impl::l1_am_encoder_impl(const int sm)
     }
 
     for (int bc = 0; bc < AM_BLOCKS_PER_FRAME; bc++) {
-        sc_data_seq(
-            sc_symbols + (bc * SYMBOLS_PER_BLOCK), 0, 0, 0, 0, bc, sm == 1 ? 1 : 2);
+        sc_data_seq(sc_symbols + (bc * SYMBOLS_PER_BLOCK),
+                    pl,
+                    hpp,
+                    aab,
+                    rdb,
+                    bc,
+                    sm == 1 ? 1 : 2);
     }
 
     set_channel_power();
@@ -104,9 +117,10 @@ void l1_am_encoder_impl::forecast(int noutput_items, gr_vector_int& ninput_items
 {
     int frames = noutput_items / AM_SYMBOLS_PER_FRAME;
 
-    ninput_items_required[0] = frames * p1_mod;
-    ninput_items_required[1] = frames * p3_mod;
-    ninput_items_required[2] = frames * AM_BLOCKS_PER_FRAME;
+    ninput_items_required[0] = frames * AM_BLOCKS_PER_FRAME;
+    ninput_items_required[1] = frames * p1_mod;
+    if (!rdb)
+        ninput_items_required[2] = frames * p3_mod;
 }
 
 int l1_am_encoder_impl::general_work(int noutput_items,
@@ -114,9 +128,12 @@ int l1_am_encoder_impl::general_work(int noutput_items,
                                      gr_vector_const_void_star& input_items,
                                      gr_vector_void_star& output_items)
 {
-    const unsigned char* p1 = (const unsigned char*)input_items[0];
-    const unsigned char* p3 = (const unsigned char*)input_items[1];
-    const unsigned char* pids = (const unsigned char*)input_items[2];
+    const unsigned char *p1 = NULL, *p3 = NULL, *pids = NULL;
+
+    pids = (const unsigned char*)input_items[0];
+    p1 = (const unsigned char*)input_items[1];
+    if (!rdb)
+        p3 = (const unsigned char*)input_items[2];
     gr_complex* out = (gr_complex*)output_items[0];
 
     int frames = noutput_items / AM_SYMBOLS_PER_FRAME;
@@ -134,15 +151,18 @@ int l1_am_encoder_impl::general_work(int noutput_items,
         }
         switch (sm) {
         case 1:
-            encode_l2_pdu(conv_mode::CONV_E2, p3 + p3_off, p3_g, p3_bits);
+            if (!rdb)
+                encode_l2_pdu(conv_mode::CONV_E2, p3 + p3_off, p3_g, p3_bits);
             interleaver_ma1();
             break;
         case 3:
-            encode_l2_pdu(conv_mode::CONV_E1, p3 + p3_off, p3_g, p3_bits);
+            if (!rdb)
+                encode_l2_pdu(conv_mode::CONV_E1, p3 + p3_off, p3_g, p3_bits);
             interleaver_ma3();
             break;
         }
-        p3_off += p3_bits;
+        if (!rdb)
+            p3_off += p3_bits;
 
         for (int symbol = 0; symbol < AM_SYMBOLS_PER_FRAME; symbol++) {
             for (int col = 0; col < 25; col++) {
@@ -206,9 +226,10 @@ int l1_am_encoder_impl::general_work(int noutput_items,
         message_port_pub(pmt::intern("clock"), pmt::from_long(1));
     }
 
-    consume(0, frames * p1_mod);
-    consume(1, frames * p3_mod);
-    consume(2, frames * AM_BLOCKS_PER_FRAME);
+    consume(0, frames * AM_BLOCKS_PER_FRAME);
+    consume(1, frames * p1_mod);
+    if (!rdb)
+        consume(2, frames * p3_mod);
 
     return noutput_items;
 }

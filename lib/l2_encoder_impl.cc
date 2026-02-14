@@ -28,10 +28,11 @@ l2_encoder::sptr l2_encoder::make(const int num_progs,
                                   const int data_bytes,
                                   const blend blend_control,
                                   const int tx_digital_gain,
-                                  const bool debug_logs)
+                                  const bool debug_logs,
+                                  const int ccc_width)
 {
     return gnuradio::get_initial_sptr(
-        new l2_encoder_impl(num_progs, first_prog, size, data_bytes, blend_control, tx_digital_gain, debug_logs));
+        new l2_encoder_impl(num_progs, first_prog, size, data_bytes, blend_control, tx_digital_gain, debug_logs, ccc_width));
 }
 
 
@@ -44,9 +45,10 @@ l2_encoder_impl::l2_encoder_impl(const int num_progs,
                                  const int data_bytes,
                                  const blend blend_control,
                                  const int tx_digital_gain,
-                                 const bool debug_logs)
+                                 const bool debug_logs,
+                                 const int ccc_width)
     : gr::block("l2_encoder",
-                gr::io_signature::make(2, 16, sizeof(unsigned char)),
+                gr::io_signature::make(0, 16, sizeof(unsigned char)),
                 gr::io_signature::make(1, 1, sizeof(unsigned char) * size))
 {
     message_port_register_in(pmt::intern("aas"));
@@ -81,7 +83,7 @@ l2_encoder_impl::l2_encoder_impl(const int num_progs,
     memset(start_seq_no, 0, sizeof(start_seq_no));
     target_seq_no = 0;
     memset(partial_bytes, 0, sizeof(partial_bytes));
-    ccc_width = 24;
+    this->ccc_width = ccc_width;
     ccc_count = 0;
     ccc = hdlc_encode({ 0x00,
                         0x00,
@@ -141,8 +143,8 @@ int l2_encoder_impl::general_work(int noutput_items,
                                   gr_vector_const_void_star& input_items,
                                   gr_vector_void_star& output_items)
 {
-    const unsigned char** hdc = (const unsigned char**)&input_items[0];
-    const unsigned char** psd = (const unsigned char**)&input_items[num_progs];
+    const unsigned char** hdc = (num_progs > 0) ? (const unsigned char**)&input_items[0] : nullptr;
+    const unsigned char** psd = (num_progs > 0) ? (const unsigned char**)&input_items[num_progs] : nullptr;
     unsigned char* out = (unsigned char*)output_items[0];
 
     int hdc_off[MAX_PROGRAMS] = { 0 };
@@ -477,8 +479,18 @@ int l2_encoder_impl::general_work(int noutput_items,
             }
         }
 
-        header_spread(
-            out_buf, out + out_off, (data_bytes > 0) ? CW2_AUDIO_FIXED : CW0_AUDIO);
+        const unsigned char *pci;
+        if (num_progs == 0) {
+            pci = CW4_FIXED;
+        } else {
+            if (data_bytes > 0) {
+                pci = CW2_AUDIO_FIXED;
+            } else {
+                pci = CW0_AUDIO;
+            }
+        }
+
+        header_spread(out_buf, out + out_off, pci);
 
         pdu_seq_no = (pdu_seq_no + 1) % pdu_seq_len;
     }
